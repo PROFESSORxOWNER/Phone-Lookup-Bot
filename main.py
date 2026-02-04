@@ -1,8 +1,7 @@
-import asyncio
 import requests
-from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
-from telegram.request import HTTPXRequest
+import json
+import time
+import os
 
 BOT_TOKEN = "8512497270:AAFYZ5r792k1z6jpZaJV7TFnVmN3lyzKB9A"
 API = "https://anishexploits.site/anish-exploits/api.php?key=demo-testing&num="
