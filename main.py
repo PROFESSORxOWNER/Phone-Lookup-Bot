@@ -1,8 +1,14 @@
 import os
 
-BOT_TOKEN = "8512497270:AAE6LZAZJ5qV-FQZU74Y8YbNyZYEoZElNxQ"
-API = "https://anishexploits.site/anish-exploits/api.php?key=demo-testing&num="
+BOT_TOKEN = os.getenv("8512497270:AAE6LZAZJ5qV-FQZU74Y8YbNyZYEoZElNxQ")
+PHONE_LOOKUP_API = os.getenv("https://anishexploits.site/anish-exploits/api.php?key=demo-testing&num=")
 
+if not BOT_TOKEN:
+    raise ValueError("8512497270:AAE6LZAZJ5qV-FQZU74Y8YbNyZYEoZElNxQ")
+
+if not PHONE_LOOKUP_API:
+    raise ValueError("https://anishexploits.site/anish-exploits/api.php?key=demo-testing&num=")
+    
 keyboard = ReplyKeyboardMarkup(
     [["📱 Phone Lookup"]],
     resize_keyboard=True
