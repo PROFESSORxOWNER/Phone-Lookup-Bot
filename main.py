@@ -1,9 +1,6 @@
-import requests
-import json
-import time
 import os
 
-BOT_TOKEN = "8512497270:AAFYZ5r792k1z6jpZaJV7TFnVmN3lyzKB9A"
+BOT_TOKEN = "8512497270:AAE6LZAZJ5qV-FQZU74Y8YbNyZYEoZElNxQ"
 API = "https://anishexploits.site/anish-exploits/api.php?key=demo-testing&num="
 
 keyboard = ReplyKeyboardMarkup(
