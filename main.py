@@ -1,101 +1,72 @@
-import os
+import requests
+import json
+import time
 
-BOT_TOKEN = os.getenv("8512497270:AAE6LZAZJ5qV-FQZU74Y8YbNyZYEoZElNxQ")
-PHONE_LOOKUP_API = os.getenv("https://anishexploits.site/anish-exploits/api.php?key=demo-testing&num=")
+BOT_TOKEN = "8512497270:AAE6LZAZJ5qV-FQZU74Y8YbNyZYEoZElNxQ"
+PHONE_LOOKUP_API = "https://anishexploits.site/anish-exploits/api.php?key=demo-testing&num="
 
-if not BOT_TOKEN:
-    raise ValueError("8512497270:AAE6LZAZJ5qV-FQZU74Y8YbNyZYEoZElNxQ")
+API_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/"
 
-if not PHONE_LOOKUP_API:
-    raise ValueError("https://anishexploits.site/anish-exploits/api.php?key=demo-testing&num=")
-    
-keyboard = ReplyKeyboardMarkup(
-    [["📱 Phone Lookup"]],
-    resize_keyboard=True
-)
+offset = 0
 
-def fetch_api(num):
+def get_updates(offset):
+    url = API_URL + "getUpdates"
+    params = {"timeout": 30, "offset": offset}
+    return requests.get(url, params=params).json()
+
+def send_message(chat_id, text, reply_markup=None, parse_mode=None):
+    url = API_URL + "sendMessage"
+    data = {"chat_id": chat_id, "text": text}
+
+    if reply_markup:
+        data["reply_markup"] = json.dumps(reply_markup)
+    if parse_mode:
+        data["parse_mode"] = parse_mode
+
+    requests.post(url, data=data)
+
+def phone_lookup(number):
     try:
-        r = requests.get(API + num, timeout=60)
-        return r.json()
-    except:
-        return None
+        response = requests.get(PHONE_LOOKUP_API + number, timeout=10)
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Welcome to Number Info Bot 👋",
-        reply_markup=keyboard
-    )
+print("Bot is running...")
 
-async def handle(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.strip()
+while True:
+    try:
+        updates = get_updates(offset)
 
-    if text == "📱 Phone Lookup":
-        await update.message.reply_text("📞 Send 10 digit mobile number:")
-        return
+        for update in updates.get("result", []):
+            offset = update["update_id"] + 1
 
-    if text.isdigit() and len(text) == 10:
-        await update.message.reply_text(f"🔍 Fetching info for {text} ...")
+            message = update.get("message")
+            if not message or "text" not in message:
+                continue
 
-        await asyncio.sleep(1)
+            chat_id = message["chat"]["id"]
+            text = message["text"].strip()
 
-        data = await asyncio.to_thread(fetch_api, text)
+            if text == "/start":
+                keyboard = {
+                    "keyboard": [[{"text": "📱 Phone Lookup"}]],
+                    "resize_keyboard": True
+                }
+                send_message(chat_id, "👋 Welcome!\nChoose an option:", reply_markup=keyboard)
 
-        if not data or data.get("success") is not True:
-            await update.message.reply_text("❌ No information found")
-            return
+            elif text == "📱 Phone Lookup":
+                send_message(chat_id, "📞 Send 10 digit mobile number:")
 
-        if "result" not in data or not data["result"]:
-            await update.message.reply_text("❌ No records available")
-            return
+            elif text.isdigit() and len(text) == 10:
+                send_message(chat_id, "🔍 Looking up number...")
+                data = phone_lookup(text)
+                formatted = json.dumps(data, indent=2)
+                send_message(chat_id, f"<pre>{formatted}</pre>", parse_mode="HTML")
 
-        d = data["result"][0]
+            else:
+                send_message(chat_id, "❌ Invalid input. Send a 10 digit mobile number.")
 
-        msg = f"""✅ Information Found
-━━━━━━━━━━━━━━━━━━━━━━
-🔢 Number: {text}
-━━━━━━━━━━━━━━━━━━━━━━
-
-👤 Name: {d.get("name","NA")}
-👨‍🦳 Father: {d.get("father_name","NA")}
-📱 Mobile: {d.get("mobile","NA")}
-🆔 ID Number: {d.get("id_number","NA")}
-🏠 Address: {d.get("address","NA")}
-📍 Circle: {d.get("circle","NA")}
-
-━━━━━━━━━━━━━━━━━━━━━━
-👑 Developer: Anish Exploits
-"""
-
-        await update.message.reply_text(msg)
-        return
-
-    await update.message.reply_text(
-        "⚠️ Invalid input\nUse button below ⬇️",
-        reply_markup=keyboard
-    )
-
-def main():
-    print("Anish Exploits Bot Started Successfully")
-
-    request = HTTPXRequest(
-        connect_timeout=120,
-        read_timeout=120,
-        write_timeout=120,
-        pool_timeout=120
-    )
-
-    app = (
-        ApplicationBuilder()
-        .token(BOT_TOKEN)
-        .request(request)
-        .build()
-    )
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle))
-
-    app.run_polling(drop_pending_updates=True)
-
-if __name__ == "__main__":
-    main()
+    except Exception as e:
+        print("Error:", e)
+        time.sleep(5)
